@@ -9,16 +9,7 @@ This project pulls BTC market data from Coinbase public REST API, preprocesses i
 
 ## Notes on timeframe
 
-Coinbase Exchange candle API supports **minimum 60 seconds** granularity and accepts the following values:
-
-- `60` (1 min)
-- `300` (5 min)
-- `900` (15 min)
-- `3600` (1 hour)
-- `21600` (6 hours)
-- `86400` (1 day)
-
-You can change it via `--granularity`.
+Coinbase Exchange candle API supports **minimum 60 seconds** granularity. You can change granularity with `--granularity` (e.g. `60`, `300`, `900`).
 
 ## Features produced
 
@@ -53,7 +44,7 @@ python -m trading_forecast.run_experiment \
   --epochs 10
 ```
 
-The script creates the output directory automatically (default: `artifacts/`) before saving the dataset CSV and then prints MAE/RMSE/MAPE for each model.
+The script saves dataset CSV and prints MAE/RMSE/MAPE for each model.
 
 ## Test
 
