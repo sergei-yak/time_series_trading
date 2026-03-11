@@ -57,7 +57,7 @@ def train_one(model: nn.Module, train_dl: DataLoader, val_dl: DataLoader, cfg: T
     mae = float(np.mean(np.abs(pred - tgt)))
     rmse = float(np.sqrt(np.mean((pred - tgt) ** 2)))
     mape = float(np.mean(np.abs((tgt - pred) / (np.abs(tgt) + 1e-6))) * 100)
-    return {"MAE": mae, "RMSE": rmse, "MAPE": mape}
+    return {"metrics": {"MAE": mae, "RMSE": rmse, "MAPE": mape}, "pred": pred, "target": tgt}
 
 
 def compare_models(x: np.ndarray, y: np.ndarray, horizon: int, cfg: TrainConfig):
@@ -73,8 +73,8 @@ def compare_models(x: np.ndarray, y: np.ndarray, horizon: int, cfg: TrainConfig)
         "ResCNN+GRU": ResCNNGRUModel(input_dim=input_dim, channels=64, gru_hidden=64, horizon=horizon),
     }
 
-    results = {}
+    outputs = {}
     for name, model in models.items():
-        results[name] = train_one(model, train_dl, test_dl, cfg)
+        outputs[name] = train_one(model, train_dl, test_dl, cfg)
 
-    return results
+    return outputs
