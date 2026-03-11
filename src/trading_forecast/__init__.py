@@ -1,0 +1,1 @@
+"""Trading forecast package."""
