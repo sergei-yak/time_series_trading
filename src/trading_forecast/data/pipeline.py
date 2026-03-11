@@ -97,12 +97,6 @@ class DataPipeline:
             raise ValueError("Not enough rows for lookback+horizon configuration")
         return x_arr, y_arr
 
-    def inverse_close_scale(self, values: np.ndarray) -> np.ndarray:
-        close_idx = REQUIRED_COLUMNS.index("close")
-        mean = self.scaler.mean_[close_idx]
-        scale = self.scaler.scale_[close_idx]
-        return values * scale + mean
-
 
 def utc_now() -> datetime:
     return datetime.now(tz=timezone.utc)
