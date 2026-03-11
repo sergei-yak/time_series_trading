@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "time-series-trading"
-version = "0.1.0"
+version = "0.2.0"
 description = "Coinbase BTC futures data pipeline and neural forecasting model comparison"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,6 +13,7 @@ dependencies = [
   "pandas>=2.2",
   "requests>=2.32",
   "scikit-learn>=1.5",
+  "matplotlib>=3.9",
   "torch>=2.2",
   "tqdm>=4.66"
 ]
@@ -20,3 +21,4 @@ dependencies = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
