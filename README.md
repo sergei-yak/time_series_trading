@@ -9,16 +9,7 @@ This project pulls BTC market data from Coinbase public REST API, preprocesses i
 
 ## Notes on timeframe
 
-Coinbase Exchange candle API supports **minimum 60 seconds** granularity and accepts the following values:
-
-- `60` (1 min)
-- `300` (5 min)
-- `900` (15 min)
-- `3600` (1 hour)
-- `21600` (6 hours)
-- `86400` (1 day)
-
-You can change it via `--granularity`.
+Coinbase Exchange candle API supports **minimum 60 seconds** granularity. You can change granularity with `--granularity` (e.g. `60`, `300`, `900`).
 
 ## Features produced
 
@@ -41,7 +32,7 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-## Run experiment (GPU + plots)
+## Run experiment
 
 ```bash
 python -m trading_forecast.run_experiment \
@@ -50,26 +41,10 @@ python -m trading_forecast.run_experiment \
   --hours 336 \
   --lookback 60 \
   --horizon 5 \
-  --epochs 10 \
-  --device auto \
-  --output-csv artifacts/coinbase_dataset.csv \
-  --plots-dir artifacts/plots
+  --epochs 10
 ```
 
-- `--device auto`: use CUDA if available, otherwise CPU
-- `--device cuda`: force GPU and fail fast if CUDA is unavailable
-- `--device cpu`: force CPU
-
-The script creates output folders automatically and writes:
-
-- Dataset CSV (default `artifacts/coinbase_dataset.csv`)
-- Per-model test plots showing real vs predicted close price curves:
-  - `artifacts/plots/bilstm_test_prediction.png`
-  - `artifacts/plots/transformer_test_prediction.png`
-  - `artifacts/plots/lstnet_test_prediction.png`
-  - `artifacts/plots/rescnnplus_gru_test_prediction.png`
-
-It also prints JSON with metrics (`MAE`, `RMSE`, `MAPE`), selected device, and saved plot paths.
+The script saves dataset CSV and prints MAE/RMSE/MAPE for each model.
 
 ## Test
 

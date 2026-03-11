@@ -13,7 +13,6 @@ dependencies = [
   "pandas>=2.2",
   "requests>=2.32",
   "scikit-learn>=1.5",
-  "matplotlib>=3.9",
   "torch>=2.2",
   "tqdm>=4.66"
 ]
