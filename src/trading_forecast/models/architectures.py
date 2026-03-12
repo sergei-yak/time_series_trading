@@ -65,3 +65,4 @@ class ResCNNGRUModel(nn.Module):
         z = self.relu(z).transpose(1, 2)
         out, _ = self.gru(z)
         return self.head(out[:, -1, :])
+

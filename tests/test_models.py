@@ -17,3 +17,4 @@ def test_model_output_shapes():
     for model in models:
         y = model(x)
         assert y.shape == (batch, horizon)
+)
