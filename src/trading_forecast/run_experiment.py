@@ -65,6 +65,42 @@ def ensure_dir(path_like: str) -> Path:
     return path
 
 
+def plot_predictions_split(model_name: str, split: str, y_true, y_pred, out_dir: Path) -> str:
+    import plotly.graph_objects as go
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(y=y_true.reshape(-1), mode="lines", name=f"Real Close Price ({split})"))
+    fig.add_trace(go.Scatter(y=y_pred.reshape(-1), mode="lines", name=f"Predicted Close Price ({split})"))
+    fig.update_layout(
+        title=f"{model_name}: Real vs Predicted Close Price ({split.title()} Set)",
+        xaxis_title="Timeline (flattened horizon steps)",
+        yaxis_title="Price",
+        template="plotly_white",
+    )
+
+    safe_name = model_name.lower().replace('+', 'plus').replace(' ', '_')
+    out_path = out_dir / f"{safe_name}_{split}_prediction.html"
+    fig.write_html(str(out_path), include_plotlyjs="cdn", full_html=True)
+    return str(out_path)
+
+
+def plot_learning_curve(model_name: str, history: dict[str, list[float]], out_dir: Path) -> str:
+    import plotly.graph_objects as go
+
+    epochs = list(range(1, len(history["train_loss"]) + 1))
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=epochs, y=history["train_loss"], mode="lines+markers", name="Train Loss"))
+    fig.add_trace(go.Scatter(x=epochs, y=history["test_loss"], mode="lines+markers", name="Test Loss"))
+    fig.update_layout(
+        title=f"{model_name}: Train vs Test Loss by Epoch",
+        xaxis_title="Epoch",
+        yaxis_title="MSE Loss",
+        template="plotly_white",
+    )
+
+    safe_name = model_name.lower().replace('+', 'plus').replace(' ', '_')
+    out_path = out_dir / f"{safe_name}_learning_curve.html"
+    fig.write_html(str(out_path), include_plotlyjs="cdn", full_html=True)
 def plot_model_predictions(model_name: str, y_true, y_pred, out_dir: Path) -> str:
     import plotly.graph_objects as go
 
@@ -129,6 +165,23 @@ def main():
     results = {}
     plot_paths = {}
     for model_name, output in outputs.items():
+        train_true = pipeline.inverse_close_scale(output["train"]["target"])
+        train_pred = pipeline.inverse_close_scale(output["train"]["pred"])
+        test_true = pipeline.inverse_close_scale(output["test"]["target"])
+        test_pred = pipeline.inverse_close_scale(output["test"]["pred"])
+
+        plot_paths[model_name] = {
+            "train_prediction": plot_predictions_split(model_name, "train", train_true, train_pred, plots_dir),
+            "test_prediction": plot_predictions_split(model_name, "test", test_true, test_pred, plots_dir),
+            "learning_curve": plot_learning_curve(model_name, output["history"], plots_dir),
+        }
+
+        results[model_name] = {
+            "train": output["train"]["metrics"],
+            "test": output["test"]["metrics"],
+            "final_train_loss": output["history"]["train_loss"][-1],
+            "final_test_loss": output["history"]["test_loss"][-1],
+        }
         y_pred_real = pipeline.inverse_close_scale(output["pred"])
         y_true_real = pipeline.inverse_close_scale(output["target"])
         plot_paths[model_name] = plot_model_predictions(model_name, y_true_real, y_pred_real, plots_dir)

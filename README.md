@@ -63,6 +63,14 @@ python -m trading_forecast.run_experiment \
 The script creates output folders automatically and writes:
 
 - Dataset CSV (default `artifacts/coinbase_dataset.csv`)
+- Per-model interactive Plotly HTML diagnostics:
+  - Train prediction vs real: `*_train_prediction.html`
+  - Test prediction vs real: `*_test_prediction.html`
+  - Learning curve (train loss vs test loss by epoch): `*_learning_curve.html`
+
+These diagnostics help you detect overfitting/underfitting.
+
+It also prints JSON with separate train/test metrics (`MAE`, `RMSE`, `MAPE`), final train/test loss, selected device, saved HTML plot paths, and package version.
 - Per-model interactive Plotly HTML plots showing real vs predicted close price curves:
   - `artifacts/plots/bilstm_test_prediction.html`
   - `artifacts/plots/transformer_test_prediction.html`
