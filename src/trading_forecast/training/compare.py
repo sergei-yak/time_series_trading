@@ -57,6 +57,7 @@ def evaluate_loader(model: nn.Module, dl: DataLoader, device: str, loss_fn: nn.M
 
 
 def train_one(model: nn.Module, train_dl: DataLoader, test_dl: DataLoader, cfg: TrainConfig):
+def train_one(model: nn.Module, train_dl: DataLoader, val_dl: DataLoader, cfg: TrainConfig):
     model.to(cfg.device)
     opt = torch.optim.Adam(model.parameters(), lr=cfg.lr)
     loss_fn = nn.MSELoss()
@@ -66,6 +67,8 @@ def train_one(model: nn.Module, train_dl: DataLoader, test_dl: DataLoader, cfg: 
         model.train()
         running_loss = 0.0
         batches = 0
+    for _ in range(cfg.epochs):
+        model.train()
         for xb, yb in train_dl:
             xb, yb = xb.to(cfg.device), yb.to(cfg.device)
             pred = model(xb)
@@ -87,6 +90,22 @@ def train_one(model: nn.Module, train_dl: DataLoader, test_dl: DataLoader, cfg: 
         "train": train_eval,
         "test": test_eval,
     }
+
+    model.eval()
+    preds, targets = [], []
+    with torch.no_grad():
+        for xb, yb in val_dl:
+            xb = xb.to(cfg.device)
+            pred = model(xb).cpu().numpy()
+            preds.append(pred)
+            targets.append(yb.numpy())
+
+    pred = np.concatenate(preds)
+    tgt = np.concatenate(targets)
+    mae = float(np.mean(np.abs(pred - tgt)))
+    rmse = float(np.sqrt(np.mean((pred - tgt) ** 2)))
+    mape = float(np.mean(np.abs((tgt - pred) / (np.abs(tgt) + 1e-6))) * 100)
+    return {"metrics": {"MAE": mae, "RMSE": rmse, "MAPE": mape}, "pred": pred, "target": tgt}
 
 
 def compare_models(x: np.ndarray, y: np.ndarray, horizon: int, cfg: TrainConfig):
