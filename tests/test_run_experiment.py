@@ -27,3 +27,4 @@ def test_validate_args_rejects_unsupported_granularity():
 
 def test_resolve_device_cpu():
     assert resolve_device("cpu") == "cpu"
+
