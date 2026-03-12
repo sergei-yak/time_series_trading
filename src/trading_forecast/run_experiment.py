@@ -66,6 +66,23 @@ def ensure_dir(path_like: str) -> Path:
 
 
 def plot_model_predictions(model_name: str, y_true, y_pred, out_dir: Path) -> str:
+    import plotly.graph_objects as go
+
+    true_flat = y_true.reshape(-1)
+    pred_flat = y_pred.reshape(-1)
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(y=true_flat, mode="lines", name="Real Close Price"))
+    fig.add_trace(go.Scatter(y=pred_flat, mode="lines", name=f"{model_name} Predicted Close Price"))
+    fig.update_layout(
+        title=f"{model_name}: Real vs Predicted Close Price (Test Set)",
+        xaxis_title="Test timeline (flattened horizon steps)",
+        yaxis_title="Price",
+        template="plotly_white",
+    )
+
+    out_path = out_dir / f"{model_name.lower().replace('+', 'plus').replace(' ', '_')}_test_prediction.html"
+    fig.write_html(str(out_path), include_plotlyjs="cdn", full_html=True)
     true_flat = y_true.reshape(-1)
     pred_flat = y_pred.reshape(-1)
 
