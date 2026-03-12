@@ -71,6 +71,13 @@ The script creates output folders automatically and writes:
 These diagnostics help you detect overfitting/underfitting.
 
 It also prints JSON with separate train/test metrics (`MAE`, `RMSE`, `MAPE`), final train/test loss, selected device, saved HTML plot paths, and package version.
+- Per-model interactive Plotly HTML plots showing real vs predicted close price curves:
+  - `artifacts/plots/bilstm_test_prediction.html`
+  - `artifacts/plots/transformer_test_prediction.html`
+  - `artifacts/plots/lstnet_test_prediction.html`
+  - `artifacts/plots/rescnnplus_gru_test_prediction.html`
+
+It also prints JSON with metrics (`MAE`, `RMSE`, `MAPE`), selected device, saved HTML plot paths, and package version.
 
 ## If you get `unrecognized arguments: --device ... --plots-dir ...`
 
@@ -91,3 +98,4 @@ Expected output should be `trading_forecast 0.2.0` (or newer). If not, activate 
 ```bash
 pytest -q
 ```
+
