@@ -14,7 +14,6 @@ dependencies = [
   "requests>=2.32",
   "scikit-learn>=1.5",
   "plotly>=5.24",
-  "matplotlib>=3.9",
   "torch>=2.2",
   "tqdm>=4.66"
 ]
@@ -22,4 +21,5 @@ dependencies = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
 
