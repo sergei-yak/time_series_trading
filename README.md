@@ -93,6 +93,23 @@ python -m trading_forecast.run_experiment --version
 
 Expected output should be `trading_forecast 0.2.0` (or newer). If not, activate the correct `.venv` and reinstall.
 
+
+## If you get `IndentationError` in `training/compare.py`
+
+This usually means your local file is corrupted (for example, a bad merge/conflict resolution) or you are not running the same source version that is in GitHub.
+
+From project root:
+
+```bash
+git status
+git checkout -- src/trading_forecast/training/compare.py
+pip uninstall -y time-series-trading
+pip install -e . --upgrade --no-cache-dir
+python -m trading_forecast.run_experiment --version
+```
+
+Then re-run the experiment command.
+
 ## Test
 
 ```bash
