@@ -5,7 +5,6 @@ import json
 from datetime import timedelta
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import torch
 
@@ -101,40 +100,6 @@ def plot_learning_curve(model_name: str, history: dict[str, list[float]], out_di
     safe_name = model_name.lower().replace('+', 'plus').replace(' ', '_')
     out_path = out_dir / f"{safe_name}_learning_curve.html"
     fig.write_html(str(out_path), include_plotlyjs="cdn", full_html=True)
-def plot_model_predictions(model_name: str, y_true, y_pred, out_dir: Path) -> str:
-    import plotly.graph_objects as go
-
-    true_flat = y_true.reshape(-1)
-    pred_flat = y_pred.reshape(-1)
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(y=true_flat, mode="lines", name="Real Close Price"))
-    fig.add_trace(go.Scatter(y=pred_flat, mode="lines", name=f"{model_name} Predicted Close Price"))
-    fig.update_layout(
-        title=f"{model_name}: Real vs Predicted Close Price (Test Set)",
-        xaxis_title="Test timeline (flattened horizon steps)",
-        yaxis_title="Price",
-        template="plotly_white",
-    )
-
-    out_path = out_dir / f"{model_name.lower().replace('+', 'plus').replace(' ', '_')}_test_prediction.html"
-    fig.write_html(str(out_path), include_plotlyjs="cdn", full_html=True)
-    true_flat = y_true.reshape(-1)
-    pred_flat = y_pred.reshape(-1)
-
-    fig, ax = plt.subplots(figsize=(12, 5))
-    ax.plot(true_flat, label="Real Close Price", linewidth=2)
-    ax.plot(pred_flat, label=f"{model_name} Predicted Close Price", linewidth=1.5)
-    ax.set_title(f"{model_name}: Real vs Predicted Close Price (Test Set)")
-    ax.set_xlabel("Test timeline (flattened horizon steps)")
-    ax.set_ylabel("Price")
-    ax.legend()
-    ax.grid(alpha=0.3)
-
-    out_path = out_dir / f"{model_name.lower().replace('+', 'plus').replace(' ', '_')}_test_prediction.png"
-    fig.tight_layout()
-    fig.savefig(out_path, dpi=150)
-    plt.close(fig)
     return str(out_path)
 
 
@@ -182,10 +147,6 @@ def main():
             "final_train_loss": output["history"]["train_loss"][-1],
             "final_test_loss": output["history"]["test_loss"][-1],
         }
-        y_pred_real = pipeline.inverse_close_scale(output["pred"])
-        y_true_real = pipeline.inverse_close_scale(output["target"])
-        plot_paths[model_name] = plot_model_predictions(model_name, y_true_real, y_pred_real, plots_dir)
-        results[model_name] = output["metrics"]
 
     print(
         json.dumps(
