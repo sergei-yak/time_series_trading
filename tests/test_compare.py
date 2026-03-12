@@ -20,3 +20,4 @@ def test_compare_models_returns_train_and_test_diagnostics():
         assert len(model_out["history"]["test_loss"]) == 1
         assert model_out["train"]["pred"].shape[1] == horizon
         assert model_out["test"]["pred"].shape[1] == horizon
+
