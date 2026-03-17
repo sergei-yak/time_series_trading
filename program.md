@@ -12,16 +12,24 @@ Before the experiment loop begins:
    - `README.md`
    - `prepare.py` (read-only unless confirmed data bug)
    - `train.py` (primary edit surface)
-2. Prepare data once:
+2. Install dependencies (GPU setup):
+   - `python -m venv .venv`
+   - Activate venv
+   - `pip install --upgrade pip setuptools wheel`
+   - `pip install -e . --no-deps`
+   - `pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126`
+   - If editable install fails with a temp permission error, set local temp/cache vars and retry:
+     - PowerShell: `$env:TEMP="$PWD\.tmp"; $env:TMP="$PWD\.tmp"; $env:PIP_CACHE_DIR="$PWD\.pip-cache"`
+3. Prepare data once:
    - Run: `python prepare.py`
    - Verify: `artifacts/dataset.npz` exists.
-3. Initialize `results.tsv`.  Create results.tsv with just the header row and 4 columns:
+4. Initialize `results.tsv`.  Create results.tsv with just the header row and 4 columns:
 
 ```tsv
 commit	RMSE	status	model	description
 ```
 
-4. Run baseline once:
+5. Run baseline once:
    - Run: `python train.py --status keep --description "baseline"`
    - Confirm baseline rows were appended (one row per model).
 

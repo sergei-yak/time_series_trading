@@ -32,7 +32,9 @@ Windows PowerShell:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -e .
+pip install --upgrade pip setuptools wheel
+pip install -e . --no-deps
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 python prepare.py
 python train.py --status auto --description "baseline"
 ```
@@ -42,9 +44,21 @@ Linux/macOS:
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install --upgrade pip setuptools wheel
+pip install -e . --no-deps
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
 python prepare.py
 python train.py --status auto --description "baseline"
+```
+
+If `pip install -e .` fails with a temporary-directory permission error, use a local temp/cache directory and retry:
+
+```powershell
+New-Item -ItemType Directory -Force .tmp,.pip-cache | Out-Null
+$env:TEMP="$PWD\.tmp"
+$env:TMP="$PWD\.tmp"
+$env:PIP_CACHE_DIR="$PWD\.pip-cache"
+pip install -e . --no-deps
 ```
 
 ## Experiment Logging
