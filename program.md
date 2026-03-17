@@ -1,61 +1,103 @@
-# Hyperparameter Search Program
+# Autonomous Research Program
 
-This file is an operating guide for an autonomous agent that improves `train.py`.
+This file is the operating guide for an autonomous research agent improving `train.py`.
 
-## Goal
-Find model/hyperparameter settings that improve test metrics for Coinbase BTC forecasting.
+## Objective
+Drive validation performance down (lower is better) on Coinbase BTC forecasting while keeping the training script stable and runnable.
 
-## Experiment tracking file
-Before running training experiments, initialize `results.tsv` with **header only**:
+## Setup (one-time)
+Before the experiment loop begins:
+
+1. Read in-scope files for context:
+   - `README.md`
+   - `prepare.py` (read-only unless confirmed data bug)
+   - `train.py` (primary edit surface)
+2. Prepare data once:
+   - Run: `python prepare.py`
+   - Verify: `artifacts/dataset.npz` exists.
+3. Initialize `results.tsv`.  Create results.tsv with just the header row and 4 columns:
 
 ```tsv
-commit	val	status	description
+commit	RMSE	status	model	description
 ```
 
-- The first baseline run is recorded as the first data row after initialization.
-- Log every experiment to `results.tsv` as **tab-separated** values (NOT comma-separated).
-- Required columns:
-  - `commit`: commit hash (or temporary run id before commit)
-  - `val`: primary validation metric used for model selection
-  - `status`: e.g., `baseline`, `improved`, `regressed`, `unstable`, `reverted`
-  - `description`: short explanation of what changed
+4. Run baseline once:
+   - Run: `python train.py --status keep --description "baseline"`
+   - Confirm baseline rows were appended (one row per model).
 
-## Loop
-1. **Prepare data once**
-   - Run: `python prepare.py`
-   - Verify `artifacts/dataset.npz` exists.
+After setup is complete, start autonomous experimentation immediately.
 
-2. **Baseline run**
-   - Run: `python train.py`
-   - Save baseline test metrics.
-   - Add a baseline row in `results.tsv`.
+## Allowed Edit Scope
+- Default: edit `train.py` only.
+- Do not edit `prepare.py` unless a data-integrity bug is confirmed.
+- Do not hard-code outcomes.
 
-3. **Tune one axis at a time**
-   - Allowed edit scope: `train.py` only.
-   - Suggested order:
-     - optimizer/lr schedule
-     - batch size and epochs
-     - model depth/width
-     - regularization (dropout, weight decay)
-     - loss variants (e.g., SmoothL1)
+## Logging Contract
+`results.tsv` is tab-separated (NOT comma-separated).
 
-4. **Track each attempt**
-   - Log each run to `results.tsv` (tab-separated).
-   - Record a short changelog entry: what changed, why, and resulting metrics.
-   - Keep only changes that beat baseline validation performance.
+- Columns:
+  - `commit`: commit hash or run id
+  - `RMSE`: run RMSE metric (lower is better)
+  - `status`: `keep`, `discard`, `crash`
+  - `model`: model name (e.g., `bilstm`, `transformer`, `lstnet`, `rescnn_gru`)
+  - `description`: short change summary
+- One experiment run logs one row per model (same `commit`, model-specific `description`).
+- For crashes, write `RMSE=0.000000` if no usable metric is produced and set `status=crash`.
 
-5. **Avoid overfitting**
-   - Prefer configurations that improve validation and test together.
-   - If validation improves but test degrades, mark as unstable and revert.
+## Autonomy Contract (Strict)
+After setup and baseline are complete, immediately enter the experiment loop.
 
-6. **Finalize**
-   - Keep the best configuration in `train.py`.
-   - Output a concise summary table with model and test metrics.
-   - Ensure `results.tsv` includes baseline + all tried experiments.
+- Do not ask "should I continue?" or "is this a good stopping point?".
+- Do not stop after a single experiment.
+- Do not pause for approval between experiments.
+- Continue until an explicit stop signal is received.
 
-## Constraints
-- Do not edit `prepare.py` during hyperparameter search unless data integrity bug is confirmed.
-- Do not hard-code results.
-- Keep the script runnable from repo root with:
-  - `python prepare.py`
-  - `python train.py`
+Stop signals:
+1. User message exactly `STOP`
+2. File `STOP_AUTORESEARCH` exists in repo root
+
+## Reporting Policy
+- Log every run to `results.tsv` (one row per model).
+- Keep human-facing progress updates sparse:
+  - report every 10 experiments, or
+  - report immediately on crash, timeout, or repeated failure pattern
+- Keep updates concise: experiment id, key val deltas, keep/discard decision.
+
+## Runtime Limits
+- Target duration per experiment: about 5 minutes total (plus small startup/eval overhead).
+- Hard timeout: 10 minutes wall-clock.
+- If a run exceeds 10 minutes, kill it, log failure (`discard` or `crash`), revert, and continue.
+
+## Crash Handling
+If a run fails (OOM, bug, runtime error):
+
+- If the issue is trivial and fixable (typo, missing import, obvious small bug), fix and re-run quickly.
+- If the idea itself is fundamentally broken, log `crash`, revert, and move on.
+- If crash persists after a few quick fixes, stop retrying that idea and move to the next.
+
+## Decision Policy
+- If target-model `RMSE` improves and behavior is stable, mark `keep` and advance code.
+- If `RMSE` is equal or worse, mark `discard` and revert to the last kept state.
+- If `RMSE` improves but test behavior clearly degrades, mark `discard` and revert.
+- Prefer simpler changes when outcomes are close.
+
+## Autonomous Loop
+After setup, LOOP FOREVER until a stop signal is received:
+
+1. Inspect current `train.py` and latest `results.tsv` entries.
+2. Propose one concrete experimental idea (single axis at a time when possible).
+3. Edit `train.py`.
+4. Run experiment:
+   - `python train.py --status <keep|discard|crash> --description "<what changed>"`
+5. If run crashes or times out, apply crash policy and log accordingly.
+6. Compare results vs latest kept baseline for each model and the primary target model.
+7. Keep or discard:
+   - keep: leave code as new baseline and set status `keep`
+   - discard: revert code to last kept state and set status `discard`/`reverted`
+8. Repeat immediately with the next idea.
+
+If ideas run out, think harder:
+- revisit prior near-misses
+- combine promising partial wins
+- try broader optimizer/schedule/model changes
+- revisit assumptions from `prepare.py` feature structure (without editing it)

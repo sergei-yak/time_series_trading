@@ -1,1 +1,29 @@
-commit	val	status	description
+commit	RMSE	status	model	description
+run_2026-03-16_222948	0.055555	keep	bilstm	baseline; test_loss=0.003160 mae=0.031879
+run_2026-03-16_222948	0.131606	keep	transformer	baseline; test_loss=0.018273 mae=0.049917
+run_2026-03-16_222948	0.045774	keep	lstnet	baseline; test_loss=0.002122 mae=0.028337
+run_2026-03-16_222948	0.053991	keep	rescnn_gru	baseline; test_loss=0.002982 mae=0.031743
+run_2026-03-16_223236	0.052494	keep	bilstm	exp1 lr=7e-4; test_loss=0.002809 mae=0.031371
+run_2026-03-16_223236	0.129751	keep	transformer	exp1 lr=7e-4; test_loss=0.017705 mae=0.049529
+run_2026-03-16_223236	0.051521	keep	lstnet	exp1 lr=7e-4; test_loss=0.002702 mae=0.031223
+run_2026-03-16_223236	0.053309	keep	rescnn_gru	exp1 lr=7e-4; test_loss=0.002908 mae=0.031424
+run_2026-03-16_223602	0.058851	discard	bilstm	exp2 lr=5e-4; test_loss=0.003556 mae=0.032748
+run_2026-03-16_223602	0.109842	discard	transformer	exp2 lr=5e-4; test_loss=0.012656 mae=0.046245
+run_2026-03-16_223602	0.052255	discard	lstnet	exp2 lr=5e-4; test_loss=0.002777 mae=0.031532
+run_2026-03-16_223602	0.054127	discard	rescnn_gru	exp2 lr=5e-4; test_loss=0.002996 mae=0.032023
+run_2026-03-16_223957	0.050703	keep	bilstm	exp3 epochs=30, lr=7e-4; test_loss=0.002625 mae=0.029913
+run_2026-03-16_223957	0.121371	keep	transformer	exp3 epochs=30, lr=7e-4; test_loss=0.015459 mae=0.046872
+run_2026-03-16_223957	0.046139	keep	lstnet	exp3 epochs=30, lr=7e-4; test_loss=0.002160 mae=0.028442
+run_2026-03-16_223957	0.050710	keep	rescnn_gru	exp3 epochs=30, lr=7e-4; test_loss=0.002626 mae=0.030274
+run_2026-03-16_224416	0.052531	discard	bilstm	exp4 weight_decay=0, epochs=30, lr=7e-4; test_loss=0.002822 mae=0.030413
+run_2026-03-16_224416	0.143456	discard	transformer	exp4 weight_decay=0, epochs=30, lr=7e-4; test_loss=0.021699 mae=0.051583
+run_2026-03-16_224416	0.048830	discard	lstnet	exp4 weight_decay=0, epochs=30, lr=7e-4; test_loss=0.002423 mae=0.029369
+run_2026-03-16_224416	0.056341	discard	rescnn_gru	exp4 weight_decay=0, epochs=30, lr=7e-4; test_loss=0.003251 mae=0.033513
+run_2026-03-16_224811	0.046515	keep	bilstm	exp5 bilstm hidden_dim=96, epochs=30, lr=7e-4; test_loss=0.002201 mae=0.028139
+run_2026-03-16_224811	0.175937	keep	transformer	exp5 bilstm hidden_dim=96, epochs=30, lr=7e-4; test_loss=0.032668 mae=0.058184
+run_2026-03-16_224811	0.045752	keep	lstnet	exp5 bilstm hidden_dim=96, epochs=30, lr=7e-4; test_loss=0.002124 mae=0.028397
+run_2026-03-16_224811	0.048973	keep	rescnn_gru	exp5 bilstm hidden_dim=96, epochs=30, lr=7e-4; test_loss=0.002444 mae=0.029426
+run_2026-03-16_225116	0.047227	discard	bilstm	exp6 bilstm hidden_dim=128, epochs=30, lr=7e-4; test_loss=0.002272 mae=0.028378
+run_2026-03-16_225116	0.156173	discard	transformer	exp6 bilstm hidden_dim=128, epochs=30, lr=7e-4; test_loss=0.025793 mae=0.050851
+run_2026-03-16_225116	0.047632	discard	lstnet	exp6 bilstm hidden_dim=128, epochs=30, lr=7e-4; test_loss=0.002305 mae=0.029003
+run_2026-03-16_225116	0.051917	discard	rescnn_gru	exp6 bilstm hidden_dim=128, epochs=30, lr=7e-4; test_loss=0.002754 mae=0.030700
