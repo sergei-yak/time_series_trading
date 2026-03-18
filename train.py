@@ -28,9 +28,9 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 @dataclass
 class TrainConfig:
     batch_size: int = 64
-    epochs: int = 30
+    epochs: int = 16
     learning_rate: float = 7e-4
-    weight_decay: float = 1e-5
+    weight_decay: float = 0.0
     device: str = DEVICE
 
 
@@ -46,15 +46,33 @@ class BiLSTMModel(nn.Module):
 
 
 class TransformerModel(nn.Module):
-    def __init__(self, input_dim: int, d_model: int, horizon: int, nhead: int = 4, num_layers: int = 2):
+    def __init__(
+        self,
+        input_dim: int,
+        d_model: int,
+        horizon: int,
+        nhead: int = 4,
+        num_layers: int = 2,
+        dim_feedforward: int | None = None,
+        dropout: float = 0.1,
+    ):
         super().__init__()
         self.proj = nn.Linear(input_dim, d_model)
-        enc_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead, batch_first=True)
+        dim_feedforward = dim_feedforward or d_model * 4
+        enc_layer = nn.TransformerEncoderLayer(
+            d_model=d_model,
+            nhead=nhead,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+            batch_first=True,
+        )
         self.encoder = nn.TransformerEncoder(enc_layer, num_layers=num_layers)
+        self.dropout = nn.Dropout(dropout)
         self.head = nn.Linear(d_model, horizon)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         z = self.proj(x)
+        z = self.dropout(z)
         z = self.encoder(z)
         return self.head(z[:, -1, :])
 
@@ -171,17 +189,49 @@ def train_one_model(model: nn.Module, ds: dict[str, np.ndarray], cfg: TrainConfi
     return model, history
 
 
-def run_experiment():
+def run_experiment(args: argparse.Namespace):
     ds = load_dataset()
-    cfg = TrainConfig()
+    cfg = TrainConfig(
+        batch_size=args.batch_size,
+        epochs=args.epochs,
+        learning_rate=args.learning_rate,
+        weight_decay=args.weight_decay,
+    )
 
     input_dim = ds["x_train"].shape[-1]
     horizon = ds["y_train"].shape[-1]
+    transformer_ff = args.transformer_dim_feedforward
+    if transformer_ff is not None and transformer_ff <= 0:
+        transformer_ff = None
     model_zoo = {
-        "bilstm": BiLSTMModel(input_dim=input_dim, hidden_dim=96, horizon=horizon),
-        "transformer": TransformerModel(input_dim=input_dim, d_model=64, horizon=horizon),
-        "lstnet": LSTNetModel(input_dim=input_dim, cnn_channels=64, gru_hidden=64, horizon=horizon),
-        "rescnn_gru": ResCNNGRUModel(input_dim=input_dim, channels=64, gru_hidden=64, horizon=horizon),
+        "bilstm": BiLSTMModel(
+            input_dim=input_dim,
+            hidden_dim=args.bilstm_hidden_dim,
+            horizon=horizon,
+            num_layers=args.bilstm_num_layers,
+        ),
+        "transformer": TransformerModel(
+            input_dim=input_dim,
+            d_model=args.transformer_d_model,
+            horizon=horizon,
+            nhead=args.transformer_nhead,
+            num_layers=args.transformer_num_layers,
+            dim_feedforward=transformer_ff,
+            dropout=args.transformer_dropout,
+        ),
+        "lstnet": LSTNetModel(
+            input_dim=input_dim,
+            cnn_channels=args.lstnet_cnn_channels,
+            gru_hidden=args.lstnet_gru_hidden,
+            horizon=horizon,
+            kernel_size=args.lstnet_kernel_size,
+        ),
+        "rescnn_gru": ResCNNGRUModel(
+            input_dim=input_dim,
+            channels=args.rescnn_channels,
+            gru_hidden=args.rescnn_gru_hidden,
+            horizon=horizon,
+        ),
     }
 
     test_dl = make_loader(ds["x_test"], ds["y_test"], cfg.batch_size, shuffle=False)
@@ -273,12 +323,33 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Run training without appending rows to results.tsv.",
     )
+    parser.add_argument("--batch-size", type=int, default=64, help="Batch size.")
+    parser.add_argument("--epochs", type=int, default=30, help="Training epochs.")
+    parser.add_argument("--learning-rate", type=float, default=7e-4, help="Optimizer learning rate.")
+    parser.add_argument("--weight-decay", type=float, default=0.0, help="AdamW weight decay.")
+    parser.add_argument("--bilstm-hidden-dim", type=int, default=128, help="BiLSTM hidden dimension.")
+    parser.add_argument("--bilstm-num-layers", type=int, default=2, help="BiLSTM layer count.")
+    parser.add_argument("--transformer-d-model", type=int, default=96, help="Transformer d_model.")
+    parser.add_argument("--transformer-nhead", type=int, default=8, help="Transformer attention heads.")
+    parser.add_argument("--transformer-num-layers", type=int, default=1, help="Transformer encoder layers.")
+    parser.add_argument(
+        "--transformer-dim-feedforward",
+        type=int,
+        default=256,
+        help="Transformer feedforward dim. Omit or <=0 for default 4*d_model.",
+    )
+    parser.add_argument("--transformer-dropout", type=float, default=0.0, help="Transformer dropout.")
+    parser.add_argument("--lstnet-cnn-channels", type=int, default=80, help="LSTNet conv channels.")
+    parser.add_argument("--lstnet-gru-hidden", type=int, default=80, help="LSTNet GRU hidden size.")
+    parser.add_argument("--lstnet-kernel-size", type=int, default=3, help="LSTNet conv kernel size.")
+    parser.add_argument("--rescnn-channels", type=int, default=72, help="ResCNN-GRU channels.")
+    parser.add_argument("--rescnn-gru-hidden", type=int, default=72, help="ResCNN-GRU hidden size.")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    output = run_experiment()
+    output = run_experiment(args)
     if not args.no_log:
         run_id = append_results_tsv(
             output=output,
