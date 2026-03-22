@@ -18,6 +18,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
 DATASET_PATH = Path("artifacts/dataset.npz")
@@ -113,6 +114,83 @@ class ResCNNGRUModel(nn.Module):
         return self.head(out[:, -1, :])
 
 
+class NBeatsBlock(nn.Module):
+    def __init__(self, backcast_size: int, horizon: int, hidden_dim: int):
+        super().__init__()
+        self.backcast_size = backcast_size
+        self.fc = nn.Sequential(
+            nn.Linear(backcast_size, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+        )
+        self.theta = nn.Linear(hidden_dim, backcast_size + horizon)
+
+    def forward(self, x_flat: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        h = self.fc(x_flat)
+        theta = self.theta(h)
+        backcast = theta[:, : self.backcast_size]
+        forecast = theta[:, self.backcast_size :]
+        return backcast, forecast
+
+
+class NBeatsModel(nn.Module):
+    def __init__(self, input_dim: int, lookback: int, horizon: int, hidden_dim: int = 256, num_blocks: int = 4):
+        super().__init__()
+        self.backcast_size = input_dim * lookback
+        self.blocks = nn.ModuleList(
+            [NBeatsBlock(self.backcast_size, horizon, hidden_dim=hidden_dim) for _ in range(num_blocks)]
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        residual = x.reshape(x.size(0), -1)
+        forecast = residual.new_zeros((x.size(0), self.blocks[0].theta.out_features - self.backcast_size))
+        for block in self.blocks:
+            backcast, block_forecast = block(residual)
+            residual = residual - backcast
+            forecast = forecast + block_forecast
+        return forecast
+
+
+class NHitsModel(nn.Module):
+    def __init__(
+        self,
+        input_dim: int,
+        lookback: int,
+        horizon: int,
+        hidden_dim: int = 256,
+        num_blocks: int = 3,
+    ):
+        super().__init__()
+        pool_sizes = [1, 2, 4, 8][: max(1, num_blocks)]
+        self.pool_sizes = pool_sizes
+        self.blocks = nn.ModuleList()
+        for pool in pool_sizes:
+            pooled_lookback = max(1, lookback // pool)
+            in_dim = input_dim * pooled_lookback
+            self.blocks.append(
+                nn.Sequential(
+                    nn.Linear(in_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.Linear(hidden_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.Linear(hidden_dim, horizon),
+                )
+            )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x: [batch, lookback, features]
+        x_tf = x.transpose(1, 2)  # [batch, features, lookback]
+        forecast = x.new_zeros((x.size(0), self.blocks[0][-1].out_features))
+        for pool, block in zip(self.pool_sizes, self.blocks):
+            pooled = F.avg_pool1d(x_tf, kernel_size=pool, stride=pool, ceil_mode=False)
+            flat = pooled.reshape(pooled.size(0), -1)
+            forecast = forecast + block(flat)
+        return forecast
+
+
 def load_dataset(path: Path = DATASET_PATH):
     data = np.load(path)
     return {
@@ -199,6 +277,7 @@ def run_experiment(args: argparse.Namespace):
     )
 
     input_dim = ds["x_train"].shape[-1]
+    lookback = ds["x_train"].shape[1]
     horizon = ds["y_train"].shape[-1]
     transformer_ff = args.transformer_dim_feedforward
     if transformer_ff is not None and transformer_ff <= 0:
@@ -231,6 +310,20 @@ def run_experiment(args: argparse.Namespace):
             channels=args.rescnn_channels,
             gru_hidden=args.rescnn_gru_hidden,
             horizon=horizon,
+        ),
+        "nbeats": NBeatsModel(
+            input_dim=input_dim,
+            lookback=lookback,
+            horizon=horizon,
+            hidden_dim=args.nbeats_hidden_dim,
+            num_blocks=args.nbeats_num_blocks,
+        ),
+        "nhits": NHitsModel(
+            input_dim=input_dim,
+            lookback=lookback,
+            horizon=horizon,
+            hidden_dim=args.nhits_hidden_dim,
+            num_blocks=args.nhits_num_blocks,
         ),
     }
 
@@ -324,7 +417,7 @@ def parse_args() -> argparse.Namespace:
         help="Run training without appending rows to results.tsv.",
     )
     parser.add_argument("--batch-size", type=int, default=64, help="Batch size.")
-    parser.add_argument("--epochs", type=int, default=30, help="Training epochs.")
+    parser.add_argument("--epochs", type=int, default=16, help="Training epochs.")
     parser.add_argument("--learning-rate", type=float, default=7e-4, help="Optimizer learning rate.")
     parser.add_argument("--weight-decay", type=float, default=0.0, help="AdamW weight decay.")
     parser.add_argument("--bilstm-hidden-dim", type=int, default=128, help="BiLSTM hidden dimension.")
@@ -344,6 +437,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lstnet-kernel-size", type=int, default=3, help="LSTNet conv kernel size.")
     parser.add_argument("--rescnn-channels", type=int, default=72, help="ResCNN-GRU channels.")
     parser.add_argument("--rescnn-gru-hidden", type=int, default=72, help="ResCNN-GRU hidden size.")
+    parser.add_argument("--nbeats-hidden-dim", type=int, default=256, help="N-BEATS hidden dimension.")
+    parser.add_argument("--nbeats-num-blocks", type=int, default=4, help="N-BEATS number of blocks.")
+    parser.add_argument("--nhits-hidden-dim", type=int, default=256, help="N-HiTS hidden dimension.")
+    parser.add_argument("--nhits-num-blocks", type=int, default=3, help="N-HiTS number of blocks.")
     return parser.parse_args()
 
 
