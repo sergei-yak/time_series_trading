@@ -88,6 +88,18 @@ In short:
 - run experiments repeatedly
 - stop only on explicit stop signal
 
+## Experiment Visualization
+
+Use `analysis.py` to visualize RMSE over experiment number from `results.tsv`:
+
+```powershell
+python analysis.py
+```
+
+This generates `artifacts/rmse_over_experiments.png`.
+
+![RMSE Over Experiments](artifacts/rmse_over_experiments.png)
+
 ## Notes
 
 - `prepare.py` should be treated as read-only during normal hyperparameter search.
