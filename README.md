@@ -100,6 +100,9 @@ This generates `artifacts/rmse_over_experiments.png`.
 
 ![RMSE Over Experiments](artifacts/rmse_over_experiments.png)
 
+The chart now supports mixed run labels and falls back to commit/run order when
+`description` does not contain `expN`, so large autotune batches are visualized.
+
 ## Notes
 
 - `prepare.py` should be treated as read-only during normal hyperparameter search.

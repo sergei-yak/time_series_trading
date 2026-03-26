@@ -54,9 +54,20 @@ def main() -> None:
     df["RMSE"] = pd.to_numeric(df["RMSE"], errors="coerce")
     df = df.dropna(subset=["RMSE", "status", "model"])
 
+    # Prefer explicit expN tags when present; otherwise use run/commit order so all runs appear.
     df["experiment_number"] = df["description"].apply(extract_experiment_number)
-    df = df.dropna(subset=["experiment_number"]).copy()
-    df["experiment_number"] = df["experiment_number"].astype(int)
+    explicit_ratio = float(df["experiment_number"].notna().mean()) if len(df) else 0.0
+    if explicit_ratio < 0.5 and "commit" in df.columns:
+        commit_order = {}
+        next_idx = 0
+        for commit in df["commit"].astype(str):
+            if commit not in commit_order:
+                commit_order[commit] = next_idx
+                next_idx += 1
+        df["experiment_number"] = df["commit"].astype(str).map(commit_order).astype(int)
+    else:
+        df = df.dropna(subset=["experiment_number"]).copy()
+        df["experiment_number"] = df["experiment_number"].astype(int)
 
     models = sorted(df["model"].unique())
     cmap = plt.get_cmap("tab10")
