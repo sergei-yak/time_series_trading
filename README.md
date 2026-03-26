@@ -98,7 +98,7 @@ python analysis.py
 
 This generates `artifacts/rmse_over_experiments.png`.
 
-![RMSE Over Experiments](artifacts/rmse_over_experiments.png)
+![RMSE Over Experiments](artifacts/rmse_over_experiments.png?v=20260325)
 
 The chart now supports mixed run labels and falls back to commit/run order when
 `description` does not contain `expN`, so large autotune batches are visualized.
