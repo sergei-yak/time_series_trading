@@ -1,0 +1,93 @@
+{
+  "bilstm": {
+    "rmse": 0.0488,
+    "run_id": "run_2026-03-25_171428",
+    "trial_id": 55,
+    "params": {
+      "batch_size": 96,
+      "epochs": 4,
+      "learning_rate": 0.00068906,
+      "weight_decay": 3e-05,
+      "bilstm_hidden_dim": 160,
+      "bilstm_num_layers": 3
+    }
+  },
+  "transformer": {
+    "rmse": 0.0541,
+    "run_id": "run_2026-03-25_185355",
+    "trial_id": 248,
+    "params": {
+      "batch_size": 128,
+      "epochs": 4,
+      "learning_rate": 0.00075575,
+      "weight_decay": 0.0,
+      "transformer_d_model": 96,
+      "transformer_nhead": 4,
+      "transformer_num_layers": 3,
+      "transformer_dim_feedforward": 256,
+      "transformer_dropout": 0.0
+    }
+  },
+  "lstnet": {
+    "rmse": 0.0489,
+    "run_id": "run_2026-03-25_175610",
+    "trial_id": 135,
+    "params": {
+      "batch_size": 128,
+      "epochs": 4,
+      "learning_rate": 0.00109582,
+      "weight_decay": 1e-05,
+      "lstnet_cnn_channels": 64,
+      "lstnet_gru_hidden": 128,
+      "lstnet_kernel_size": 5
+    }
+  },
+  "rescnn_gru": {
+    "rmse": 0.054,
+    "run_id": "run_2026-03-25_185443",
+    "trial_id": 250,
+    "params": {
+      "batch_size": 64,
+      "epochs": 4,
+      "learning_rate": 0.00051937,
+      "weight_decay": 0.0,
+      "rescnn_channels": 96,
+      "rescnn_gru_hidden": 128
+    }
+  },
+  "nbeats": {
+    "rmse": 0.0436,
+    "run_id": "run_2026-03-25_191548",
+    "trial_id": 287,
+    "params": {
+      "batch_size": 64,
+      "epochs": 4,
+      "learning_rate": 0.00110428,
+      "weight_decay": 0.0,
+      "nbeats_hidden_dim": 256,
+      "nbeats_num_blocks": 5,
+      "nbeats_num_layers": 5,
+      "nbeats_trend_degree": 3,
+      "nbeats_seasonality_harmonics": 6,
+      "nbeats_dropout": 0.1,
+      "nbeats_share_weights": false
+    }
+  },
+  "nhits": {
+    "rmse": 0.0449,
+    "run_id": "run_2026-03-25_181116",
+    "trial_id": 168,
+    "params": {
+      "batch_size": 64,
+      "epochs": 3,
+      "learning_rate": 0.00101812,
+      "weight_decay": 5e-05,
+      "nhits_hidden_dim": 448,
+      "nhits_num_blocks": 3,
+      "nhits_num_layers": 2,
+      "nhits_dropout": 0.03,
+      "nhits_pool_sizes": "6,3,1",
+      "nhits_downsample_frequencies": "6,3,1"
+    }
+  }
+}
